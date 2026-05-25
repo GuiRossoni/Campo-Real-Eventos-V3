@@ -1,0 +1,5 @@
+{
+  "name": "Campo Real Eventos",
+  "description": "Sistema completo para gerenciamento e inscrições de eventos acadêmicos institucionais.",
+  "requestFramePermissions": ["camera"]
+}
