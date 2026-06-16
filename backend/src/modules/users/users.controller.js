@@ -10,5 +10,15 @@ export class UsersController {
             res.status(500).json({ success: false, error: e.message });
         }
     }
+    async handleUpdateFinancialSettings(req, res) {
+        try {
+            const payload = req.body;
+            const updated = await usersService.updateFinancialSettings(payload);
+            res.json({ success: true, data: updated });
+        }
+        catch (e) {
+            res.status(500).json({ success: false, error: e.message });
+        }
+    }
 }
 export const usersController = new UsersController();

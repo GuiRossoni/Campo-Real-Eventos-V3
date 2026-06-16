@@ -56,5 +56,24 @@ export class UsersRepository {
         }
         return fallbackDb.users;
     }
+    async updateFinancialSettings(settings) {
+        const payload = {
+            pixKey: settings.pixKey || '',
+            pixReceiverName: settings.pixReceiverName || 'Campo Real Eventos',
+            updatedAt: settings.updatedAt || new Date().toISOString()
+        };
+        if (isUsingMySQL && mysqlPool) {
+            try {
+                await mysqlPool.query('INSERT INTO financial_settings (id, pixKey, pixReceiverName, updatedAt) VALUES (1, ?, ?, ?) ON DUPLICATE KEY UPDATE pixKey = VALUES(pixKey), pixReceiverName = VALUES(pixReceiverName), updatedAt = VALUES(updatedAt)', [payload.pixKey, payload.pixReceiverName, payload.updatedAt]);
+                return payload;
+            }
+            catch (e) {
+                throw new Error(`Erro ao atualizar configuração financeira no MySQL: ${e.message}`);
+            }
+        }
+        fallbackDb.financialSettings = payload;
+        saveFallbackDb();
+        return payload;
+    }
 }
 export const usersRepository = new UsersRepository();

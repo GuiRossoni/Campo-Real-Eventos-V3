@@ -8,7 +8,6 @@ import DashboardAluno from './shared/components/DashboardAluno';
 import DashboardProfessor from './shared/components/DashboardProfessor';
 import DashboardCoordenador from './shared/components/DashboardCoordenador';
 import AuthModal from './shared/components/AuthModal';
-import CertificateView from './shared/components/CertificateView';
 import Footer from './shared/components/Footer';
 import LoginLanding from './shared/components/LoginLanding';
 import SobreNos from './shared/components/SobreNos';
@@ -16,7 +15,7 @@ import ComoFunciona from './shared/components/ComoFunciona';
 import AjudaFaq from './shared/components/AjudaFaq';
 import PoliticaPrivacidade from './shared/components/PoliticaPrivacidade';
 import { DB } from './shared/utils/db';
-import { User, Event, Workshop, Enrollment, Attendance, HomeBanner, SystemLog, UserRole } from './types';
+import { User, Event, Workshop, Enrollment, Attendance, HomeBanner, SystemLog, FinancialSettings } from './types';
 import { Users, FileCode, Play, AlertCircle, Sparkles, BookOpen } from 'lucide-react';
 
 export default function App() {
@@ -35,9 +34,13 @@ export default function App() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showCheckoutForWsIds, setShowCheckoutForWsIds] = useState<string[] | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [activeCertificateView, setActiveCertificateView] = useState<any>(null);
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [forceCreateEvent, setForceCreateEvent] = useState(false);
+  const [financialSettings, setFinancialSettings] = useState<FinancialSettings>(DB.getFinancialSettings());
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem('cre_theme_mode');
+    return savedTheme === 'dark' ? 'dark' : 'light';
+  });
 
   const reloadFromDB = () => {
     DB.init();
@@ -49,7 +52,12 @@ export default function App() {
     setBanners(DB.getBanners());
     setLogs(DB.getLogs());
     setUsers(DB.getUsers());
+    setFinancialSettings(DB.getFinancialSettings());
   };
+
+  useEffect(() => {
+    localStorage.setItem('cre_theme_mode', themeMode);
+  }, [themeMode]);
 
   const handleQuickCreateEvent = () => {
     if (!currentUser) {
@@ -112,7 +120,7 @@ export default function App() {
     reloadFromDB();
   };
 
-  const handleConfirmCheckout = (paymentOption: 'CREDITO' | 'PIX' | 'GRATUITO') => {
+  const handleConfirmCheckout = (paymentOption: 'PIX' | 'GRATUITO') => {
     if (!selectedEventId) return;
 
     try {
@@ -196,7 +204,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-950 flex flex-col font-sans antialiased overflow-x-hidden selection:bg-blue-600 selection:text-white">
+    <div className={`min-h-screen bg-[#F8F9FA] text-gray-950 flex flex-col font-sans antialiased overflow-x-hidden selection:bg-blue-600 selection:text-white ${themeMode === 'dark' ? 'theme-dark' : ''}`}>
       
       <Header 
         currentUser={currentUser}
@@ -206,6 +214,8 @@ export default function App() {
         setSearchQuery={setSearchQuery}
         onQuickCreateEvent={handleQuickCreateEvent}
         onProfileUpdated={reloadFromDB}
+        themeMode={themeMode}
+        onToggleTheme={() => setThemeMode(prev => prev === 'light' ? 'dark' : 'light')}
         onLogoClick={() => {
           setSearchQuery('');
           setSelectedEventId(null);
@@ -240,8 +250,6 @@ export default function App() {
                   events={events}
                   workshops={workshops}
                   attendances={attendances}
-                  certificates={DB.getCertificates(currentUser.id)}
-                  onOpenCertificate={(c) => setActiveCertificateView(c)}
                   onProfileUpdated={reloadFromDB}
                   onSelectEvent={(id) => setSelectedEventId(id)}
                 />
@@ -269,6 +277,7 @@ export default function App() {
                   logs={logs}
                   banners={banners}
                   systemUsers={users}
+                  financialSettings={financialSettings}
                   onDataChanged={reloadFromDB}
                 />
               )}
@@ -311,6 +320,8 @@ export default function App() {
         <CheckoutModal 
           event={trackingEvent}
           selectedWorkshops={workshops.filter(w => showCheckoutForWsIds.includes(w.id))}
+          pixKey={financialSettings.pixKey}
+          pixReceiverName={financialSettings.pixReceiverName}
           onClose={() => setShowCheckoutForWsIds(null)}
           onConfirm={handleConfirmCheckout}
         />
@@ -320,13 +331,6 @@ export default function App() {
         <AuthModal 
           onClose={() => setShowAuthModal(false)}
           onLoginSuccess={handleLoginSuccess}
-        />
-      )}
-
-      {activeCertificateView && (
-        <CertificateView 
-          certificate={activeCertificateView}
-          onClose={() => setActiveCertificateView(null)}
         />
       )}
 

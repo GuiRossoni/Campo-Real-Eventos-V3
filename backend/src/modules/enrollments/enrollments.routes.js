@@ -91,20 +91,4 @@ router.post('/api/db/write-attendance-remove', async (req, res) => {
         res.status(500).json({ success: false, error: e.message });
     }
 });
-router.post('/api/db/write-certificate-save', async (req, res) => {
-    try {
-        const cert = req.body;
-        if (isUsingMySQL && mysqlPool) {
-            await mysqlPool.query('INSERT INTO certificates (id, userId, userName, userRa, eventId, eventName, hours, hash, issuedAt, coordinationSignature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [cert.id, cert.userId, cert.userName, cert.userRa || null, cert.eventId, cert.eventName, cert.hours, cert.hash, cert.issuedAt, cert.coordinationSignature]);
-        }
-        else {
-            fallbackDb.certificates.push(cert);
-            saveFallbackDb();
-        }
-        res.json({ success: true });
-    }
-    catch (e) {
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
 export default router;

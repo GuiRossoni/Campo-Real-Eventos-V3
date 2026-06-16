@@ -50,7 +50,7 @@ npm run build
 -------------------------------
 Observação: o backend está organizado em módulos em `backend/src/modules`. Seguem os endpoints mais usados:
 
-- GET  /api/db/get-state               -> retorna o estado completo (users, events, workshops, enrollments, attendance, banners, logs, certificates)
+- GET  /api/db/get-state               -> retorna o estado completo (users, events, workshops, enrollments, attendance, banners, logs, financialSettings)
 - POST /api/db/write-user-register     -> registra usuário (auth)
 - POST /api/db/write-user-update       -> atualiza usuário
 - POST /api/db/write-event-save        -> cria evento
@@ -58,7 +58,7 @@ Observação: o backend está organizado em módulos em `backend/src/modules`. S
 - POST /api/db/write-event-delete      -> remove evento
 - POST /api/db/write-workshop-save     -> cria workshop
 - POST /api/db/write-enrollment-save   -> registra inscrição
-- POST /api/db/write-certificate-save  -> grava certificado
+- POST /api/db/write-financial-settings -> salva chave PIX e favorecido
 - POST /api/db/write-log               -> grava log do sistema
 
 📝 Notas

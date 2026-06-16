@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { User, Enrollment, Attendance, Certificate, Event, Workshop } from '../../types';
+import { User, Enrollment, Attendance, Event, Workshop } from '../../types';
 import { UserCircle, Shield, Award, Edit3, ClipboardList, CheckCircle2, QrCode, BookOpen, AlertCircle, Save } from 'lucide-react';
-import { DB } from '../utils/db';
 
 interface DashboardAlunoProps {
   currentUser: User;
@@ -9,8 +8,6 @@ interface DashboardAlunoProps {
   events: Event[];
   workshops: Workshop[];
   attendances: Attendance[];
-  certificates: Certificate[];
-  onOpenCertificate: (cert: Certificate) => void;
   onProfileUpdated: () => void;
   onSelectEvent?: (id: string) => void;
 }
@@ -21,8 +18,6 @@ export default function DashboardAluno({
   events,
   workshops,
   attendances,
-  certificates,
-  onOpenCertificate,
   onProfileUpdated,
   onSelectEvent
 }: DashboardAlunoProps) {
@@ -51,14 +46,14 @@ export default function DashboardAluno({
             <span className="text-blue-600">Ingressos</span>
           </h3>
           <p className="text-xs text-gray-500 mb-5 pb-3 border-b border-gray-150">
-            Acompanhe suas confirmações de pagamento, consulte QR Codes de entrada e libere seus certificados após a presença.
+            Acompanhe suas confirmações de pagamento, consulte QR Codes de entrada e acompanhe suas presenças.
           </p>
 
             {studentEnrollments.length === 0 ? (
               <div className="text-center p-8 bg-gray-50 border border-gray-150 rounded-2xl py-12">
                 <AlertCircle className="w-10 h-10 text-gray-400 mx-auto mb-3" />
                 <h4 className="text-gray-700 font-bold text-sm">Você ainda não se inscreveu em nenhum evento</h4>
-                <p className="text-xs text-gray-500 mt-1">Busque eventos na nossa página e faça sua inscrição gratuita ou paga.</p>
+                <p className="text-xs text-gray-500 mt-1">Busque eventos na nossa página e faça sua inscrição gratuita ou via PIX.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-5">
@@ -69,8 +64,6 @@ export default function DashboardAluno({
                   const isPresent = ev?.category === 'SEMANA ACADÊMICA'
                     ? (isCheckedInForEvent(en.eventId) || attendances.some(a => a.userId === currentUser.id && a.eventId === en.eventId && a.workshopId))
                     : isCheckedInForEvent(en.eventId);
-                  
-                  const cert = certificates.find(c => c.eventId === en.eventId);
 
                   return (
                     <div 
@@ -159,32 +152,13 @@ export default function DashboardAluno({
                           <div className="mt-2 bg-green-50 border border-green-100 p-2 rounded-lg flex items-center justify-between gap-3 text-xs">
                             <div className="flex items-center gap-1.5 text-green-700 font-semibold">
                               <Award className="w-4 h-4" />
-                              <span>Presença confirmada! Certificado pronto.</span>
+                              <span>Presença confirmada! Horas registradas no sistema.</span>
                             </div>
-                            
-                            {cert ? (
-                              <button 
-                                onClick={() => onOpenCertificate(cert)}
-                                className="bg-blue-600 text-white hover:bg-blue-700 font-bold text-[10px] uppercase tracking-wider py-1.5 px-3 rounded-lg transition-all cursor-pointer"
-                              >
-                                Emitir PDF
-                              </button>
-                            ) : (
-                              <button 
-                                onClick={() => {
-                                  const newC = DB.autoGenerateCertificate(currentUser, en.eventId);
-                                  if (newC) onOpenCertificate(newC);
-                                }}
-                                className="bg-blue-600 text-white hover:bg-blue-500 font-bold text-[10px] uppercase tracking-wider py-1.5 px-3 rounded-lg transition-all cursor-pointer"
-                              >
-                                Gerar Agora
-                              </button>
-                            )}
                           </div>
                         ) : (
                           <div className="mt-2 bg-gray-50 border border-gray-150 p-2.5 rounded-lg flex items-center gap-2 text-[10px] text-gray-500 italic">
                             <AlertCircle className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span>Controle de presença pendente. Apresente seu QR Code de entrada para liberar certificados e contabilizar horas extracurriculares.</span>
+                            <span>Controle de presença pendente. Apresente seu QR Code de entrada para contabilizar sua frequência.</span>
                           </div>
                         )}
 

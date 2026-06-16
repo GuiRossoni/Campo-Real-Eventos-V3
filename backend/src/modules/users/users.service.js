@@ -9,5 +9,8 @@ export class UsersService {
     async getAllUsers() {
         return usersRepository.getUsers();
     }
+    async updateFinancialSettings(settings) {
+        return usersRepository.updateFinancialSettings(settings);
+    }
 }
 export const usersService = new UsersService();

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../../types';
-import { LogIn, LogOut, UserCheck, ShieldAlert, BookOpen, Search, User as UserIcon, Edit3, Save, X } from 'lucide-react';
+import { LogIn, LogOut, UserCheck, ShieldAlert, BookOpen, Search, User as UserIcon, Edit3, Save, X, Moon, Sun } from 'lucide-react';
 import Logo from './Logo';
 import { DB } from '../utils/db';
 import { THEME } from '../styles/designSystem';
@@ -11,6 +11,8 @@ interface HeaderProps {
   onOpenAuth: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  themeMode: 'light' | 'dark';
+  onToggleTheme: () => void;
   onQuickCreateEvent?: () => void;
   onProfileUpdated?: () => void;
   onLogoClick?: () => void;
@@ -22,6 +24,8 @@ export default function Header({
   onOpenAuth,
   searchQuery,
   setSearchQuery,
+  themeMode,
+  onToggleTheme,
   onQuickCreateEvent,
   onProfileUpdated,
   onLogoClick
@@ -80,6 +84,13 @@ export default function Header({
 
         
         <div className={THEME.header.mobileActions}>
+          <button
+            onClick={onToggleTheme}
+            className="text-gray-500 hover:text-blue-700 p-2 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors"
+            title={themeMode === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
+          >
+            {themeMode === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </button>
           {currentUser ? (
             <div className={THEME.header.mobileUserWrapper}>
               <button 
@@ -114,6 +125,14 @@ export default function Header({
       </div>
 
       <div className={THEME.header.actionsWrapper}>
+        <button
+          onClick={onToggleTheme}
+          className="hidden md:flex items-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold uppercase text-[9px] tracking-wider py-2 px-3 rounded-lg transition-colors cursor-pointer"
+          title={themeMode === 'light' ? 'Ativar tema escuro' : 'Ativar tema claro'}
+        >
+          {themeMode === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+          <span>{themeMode === 'light' ? 'Tema Escuro' : 'Tema Claro'}</span>
+        </button>
 
         
         {currentUser ? (

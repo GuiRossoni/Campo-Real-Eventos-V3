@@ -9,7 +9,7 @@ interface AjudaFaqProps {
 export default function AjudaFaq({ onBackToHome }: AjudaFaqProps) {
   const [supportName, setSupportName] = useState('');
   const [supportEmail, setSupportEmail] = useState('');
-  const [supportSubject, setSupportSubject] = useState('Dúvida sobre Certificado');
+  const [supportSubject, setSupportSubject] = useState('Dúvida sobre Frequência');
   const [supportMessage, setSupportMessage] = useState('');
   const [formSent, setFormSent] = useState(false);
 
@@ -17,8 +17,8 @@ export default function AjudaFaq({ onBackToHome }: AjudaFaqProps) {
 
   const faqs = [
     {
-      question: 'Como faço para baixar o meu certificado?',
-      answer: 'Acesse o sistema com o seu login e e-mail institucional. No seu menu do painel de aluno, selecione a aba "Meus Certificados". Se a sua presença na lista oficial do workshop já tiver sido assinada pelo palestrante, o botão para download estará liberado instantaneamente.'
+      question: 'Como acompanho minha frequência nos eventos?',
+      answer: 'Acesse o sistema com seu login institucional e consulte seus ingressos e status de presença registrados nas atividades em que você realizou check-in.'
     },
     {
       question: 'Posso alterar meus workshops escolhidos após concluir a inscrição?',
@@ -26,11 +26,11 @@ export default function AjudaFaq({ onBackToHome }: AjudaFaqProps) {
     },
     {
       question: 'Como funciona o pagamento das taxas de workshops pagos?',
-      answer: 'A plataforma oferece opções de simulação em Pix e Cartão de Crédito para workshops autônomos que demandam materiais extras. O processo é totalmente integrado para fins didáticos e atualiza o seu ticket na mesma hora.'
+      answer: 'A plataforma aceita somente PIX para eventos pagos. Após o pagamento, a inscrição fica pendente até validação manual da coordenação no painel de inscritos e pagamentos.'
     },
     {
       question: 'Sou um visitante externo da comunidade, posso participar dos eventos?',
-      answer: 'Sim! No portal de login, clique no botão "Entrar e navegar como visitante público". Você poderá se inscrever nos eventos abertos à comunidade geral e validar seus certificados acadêmicos normalmente.'
+      answer: 'Sim! No portal de login, clique no botão "Entrar e navegar como visitante público". Você poderá se inscrever nos eventos abertos à comunidade geral e acompanhar sua frequência normalmente.'
     },
     {
       question: 'Esqueci minha senha institucional ou não consigo logar, o que fazer?',
@@ -77,7 +77,7 @@ export default function AjudaFaq({ onBackToHome }: AjudaFaqProps) {
           Ajuda / FAQ
         </h1>
         <p className={COMPONENT.ajudaFaq.headingText}>
-          Precisa de auxílio sobre certificados, inscrições ou cadastro? Navegue pelas dúvidas resolvidas abaixo ou envie uma mensagem diretamente para a comissão organizadora de eventos.
+          Precisa de auxílio sobre frequência, inscrições ou cadastro? Navegue pelas dúvidas resolvidas abaixo ou envie uma mensagem diretamente para a comissão organizadora de eventos.
         </p>
       </div>
 
@@ -158,7 +158,7 @@ export default function AjudaFaq({ onBackToHome }: AjudaFaqProps) {
                   value={supportSubject}
                   onChange={e => setSupportSubject(e.target.value)}
                 >
-                  <option value="Dúvida sobre Certificado">Dúvida sobre Certificado</option>
+                  <option value="Dúvida sobre Frequência">Dúvida sobre Frequência</option>
                   <option value="Erro no Cadastro/Login">Erro no Cadastro ou Login</option>
                   <option value="Inscrição de workshops">Inscrição em Workshops</option>
                   <option value="Contato com Coordenador">Falar com Coordenação de Eventos</option>

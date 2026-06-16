@@ -25,7 +25,7 @@ export default function DashboardProfessor({
   forceCreateTab,
   onTabOpened
 }: DashboardProfessorProps) {
-  const [activeTab, setActiveTab] = useState<'LIST' | 'CREATE_EVENT' | 'MANAGE_PARTICIPANTS'>('LIST');
+  const [activeTab, setActiveTab] = useState<'LIST' | 'CREATE_EVENT' | 'MANAGE_PARTICIPANTS' | 'REPORT'>('LIST');
 
   React.useEffect(() => {
     if (forceCreateTab) {
@@ -84,6 +84,8 @@ export default function DashboardProfessor({
   };
 
   const professorEvents = events.filter(e => e.status === 'PUBLICADO' || e.creatorId === currentUser.id || currentUser.role === 'COORDENADOR' || currentUser.role === 'ROOT');
+  const workshopEventIds = new Set(workshops.map(w => w.eventId));
+  const reportEvents = professorEvents.filter(e => workshopEventIds.has(e.id));
 
   const filteredProfessorEvents = professorEvents.filter(e => {
     if (listFilter === 'TODOS') return true;
@@ -92,6 +94,26 @@ export default function DashboardProfessor({
 
   const getEventEnrolledCount = (eventId: string) => {
     return enrollments.filter(en => en.eventId === eventId && en.status === 'APROVADO').length;
+  };
+
+  const getEventAttendanceRate = (eventId: string) => {
+    const enrolled = enrollments.filter(en => en.eventId === eventId && en.status !== 'CANCELADO');
+    const presentUserIds = new Set(
+      attendances
+        .filter(att => att.eventId === eventId)
+        .map(att => att.userId)
+    );
+
+    const presentCount = enrolled.filter(en => presentUserIds.has(en.userId)).length;
+    const total = enrolled.length;
+    const percentage = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+
+    return {
+      total,
+      presentCount,
+      absentCount: Math.max(0, total - presentCount),
+      percentage
+    };
   };
 
   
@@ -278,6 +300,14 @@ export default function DashboardProfessor({
           >
             <Plus className="w-4 h-4 text-white" />
             <span>Novo Evento</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('REPORT')}
+            className={`flex-1 md:flex-none px-4 py-2 rounded-lg cursor-pointer transition-all ${activeTab === 'REPORT' ? 'bg-white text-gray-800 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+            Relatório de Frequência
           </button>
         </div>
       </div>
@@ -1106,7 +1136,7 @@ export default function DashboardProfessor({
 
                 {parentEvent.category === 'SEMANA ACADÊMICA' && (
                   <div className="bg-blue-50 border border-blue-150 p-2.5 rounded-lg text-[10px] text-blue-700 leading-normal font-medium">
-                    💡 <strong>Semana Acadêmica Integrada:</strong> Os minicursos deste evento ficarão relacionados de forma unificada. O aluno emitirá um único certificado contendo a somatória das horas e presenças consolidadas!
+                    💡 <strong>Semana Acadêmica Integrada:</strong> Os minicursos deste evento ficarão relacionados de forma unificada. O aluno terá frequência e horas consolidadas no mesmo histórico de participação.
                   </div>
                 )}
 
@@ -1133,6 +1163,61 @@ export default function DashboardProfessor({
         );
       })()}
 
+
+      {activeTab === 'REPORT' && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs flex flex-col gap-4">
+          <div className="border-b border-gray-150 pb-4">
+            <h3 className="text-gray-800 font-black text-sm uppercase tracking-wider">Relatório de Frequência do Orientador</h3>
+            <p className="text-xs text-gray-500 mt-1">Percentual de presença dos inscritos em eventos que possuem workshops vinculados.</p>
+          </div>
+
+          {reportEvents.length === 0 ? (
+            <div className="text-center py-10 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-500">
+              Nenhum evento com workshops disponível para geração de relatório.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reportEvents.map((ev) => {
+                const metrics = getEventAttendanceRate(ev.id);
+                const eventWorkshops = workshops.filter(w => w.eventId === ev.id).length;
+                return (
+                  <div key={ev.id} className="border border-gray-200 rounded-xl p-4 bg-white shadow-3xs">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-800 leading-tight">{ev.name}</h4>
+                        <p className="text-[11px] text-gray-500 mt-1">{eventWorkshops} workshop(s) vinculado(s)</p>
+                      </div>
+                      <span className="text-lg font-black text-blue-600">{metrics.percentage}%</span>
+                    </div>
+
+                    <div className="mt-3 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-600 rounded-full"
+                        style={{ width: `${metrics.percentage}%` }}
+                      />
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-gray-50 rounded-lg p-2 border border-gray-150">
+                        <div className="text-[10px] text-gray-500 uppercase font-bold">Inscritos</div>
+                        <div className="text-sm font-black text-gray-800">{metrics.total}</div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-2 border border-green-150">
+                        <div className="text-[10px] text-green-700 uppercase font-bold">Presentes</div>
+                        <div className="text-sm font-black text-green-700">{metrics.presentCount}</div>
+                      </div>
+                      <div className="bg-orange-50 rounded-lg p-2 border border-orange-150">
+                        <div className="text-[10px] text-orange-700 uppercase font-bold">Faltas</div>
+                        <div className="text-sm font-black text-orange-700">{metrics.absentCount}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

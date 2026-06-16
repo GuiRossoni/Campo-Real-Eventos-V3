@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+html, body, #root {
+	min-height: 100%;
+}
+
+.theme-dark {
+	filter: invert(0.93) hue-rotate(180deg);
+	background: #111827;
+}
+
+.theme-dark img,
+.theme-dark video,
+.theme-dark iframe,
+.theme-dark svg {
+	filter: invert(1) hue-rotate(180deg);
+}

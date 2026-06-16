@@ -1,4 +1,4 @@
-import { User, Event, Workshop, Enrollment, Attendance, HomeBanner, SystemLog, Certificate, PaymentStatus, FinancialExpense } from '../../types';
+import { User, Event, Workshop, Enrollment, Attendance, HomeBanner, SystemLog, PaymentStatus, FinancialExpense, FinancialSettings, PaymentOption } from '../../types';
 import {
   SEEDED_USERS,
   SEEDED_EVENTS,
@@ -18,9 +18,15 @@ const KEYS = {
   ATTENDANCE: 'cre_attendance',
   BANNERS: 'cre_banners',
   LOGS: 'cre_logs',
-  CERTIFICATES: 'cre_certificates',
   CURRENT_USER: 'cre_current_user',
-  EXPENSES: 'cre_expenses'
+  EXPENSES: 'cre_expenses',
+  FINANCIAL_SETTINGS: 'cre_financial_settings'
+};
+
+const DEFAULT_FINANCIAL_SETTINGS: FinancialSettings = {
+  pixKey: '',
+  pixReceiverName: 'Campo Real Eventos',
+  updatedAt: new Date(0).toISOString()
 };
 
 function read<T>(key: string, defaultData: T): T {
@@ -59,8 +65,8 @@ export const DB = {
     read<Attendance[]>(KEYS.ATTENDANCE, SEEDED_ATTENDANCE);
     read<HomeBanner[]>(KEYS.BANNERS, SEEDED_BANNERS);
     read<SystemLog[]>(KEYS.LOGS, SEEDED_LOGS);
-    read<Certificate[]>(KEYS.CERTIFICATES, []);
     read<FinancialExpense[]>(KEYS.EXPENSES, SEEDED_EXPENSES);
+    read<FinancialSettings>(KEYS.FINANCIAL_SETTINGS, DEFAULT_FINANCIAL_SETTINGS);
   },
 
   async syncWithBackend(onSuccess?: () => void): Promise<void> {
@@ -77,10 +83,13 @@ export const DB = {
         write(KEYS.ATTENDANCE, d.attendance);
         write(KEYS.BANNERS, d.banners);
         write(KEYS.LOGS, d.logs);
-        write(KEYS.CERTIFICATES, d.certificates);
         
         if (d.expenses) {
           write(KEYS.EXPENSES, d.expenses);
+        }
+
+        if (d.financialSettings) {
+          write(KEYS.FINANCIAL_SETTINGS, d.financialSettings);
         }
 
         const curUser = this.getCurrentUser();
@@ -360,7 +369,7 @@ export const DB = {
     userId: string;
     eventId: string;
     selectedWorkshops: string[];
-    paymentOption: 'CREDITO' | 'PIX' | 'GRATUITO';
+    paymentOption: PaymentOption;
   }): Enrollment {
     const users = this.getUsers();
     const events = this.getEvents();
@@ -404,6 +413,7 @@ export const DB = {
       eventName: event.name,
       selectedWorkshops: params.selectedWorkshops,
       totalValue,
+      paymentOption: totalValue > 0 ? params.paymentOption : 'GRATUITO',
       status: totalValue > 0 ? 'PENDENTE' : 'APROVADO',
       createdAt: new Date().toISOString()
     };
@@ -576,10 +586,6 @@ export const DB = {
 
     apiPost('/api/db/write-attendance-save', newAtt);
 
-    if (!workshopId) {
-      this.autoGenerateCertificate(user, eventId);
-    }
-
     return newAtt;
   },
 
@@ -598,75 +604,33 @@ export const DB = {
     apiPost('/api/db/write-attendance-remove', { id });
   },
 
-  getCertificates(userId?: string): Certificate[] {
-    const all = read<Certificate[]>(KEYS.CERTIFICATES, []);
-    if (userId) {
-      return all.filter(c => c.userId === userId);
-    }
-    return all;
+  getFinancialSettings(): FinancialSettings {
+    return read<FinancialSettings>(KEYS.FINANCIAL_SETTINGS, DEFAULT_FINANCIAL_SETTINGS);
   },
 
-  autoGenerateCertificate(user: User, eventId: string): Certificate | null {
-    const certs = this.getCertificates();
-    const exists = certs.find(c => c.userId === user.id && c.eventId === eventId);
-    if (exists) return exists;
-
-    const events = this.getEvents();
-    const event = events.find(e => e.id === eventId);
-    if (!event) return null;
-
-    let hours = 0;
-    let workshopsDetails = "";
-
-    if (event.category === 'SEMANA ACADÊMICA') {
-      const atts = this.getAttendance(eventId).filter(a => a.userId === user.id && a.workshopId !== undefined);
-      const wsIds = atts.map(a => a.workshopId);
-      const wsObjList = this.getWorkshops(eventId).filter(w => wsIds.includes(w.id));
-
-      if (wsObjList.length > 0) {
-        const sumHours = wsObjList.reduce((acc, curr) => acc + (curr.hours || 4), 0);
-        hours = 12 + sumHours;
-        const details = wsObjList.map(w => `• ${w.name} (${w.hours || 4}h)`).join('\n');
-        workshopsDetails = `Workshops Integrados Concluintes:\n${details}`;
-      } else {
-        hours = 20;
-        workshopsDetails = "Participação em palestras gerais de Semana Acadêmica.";
-      }
-    } else {
-      const baseHours = 4;
-      const categoryBonus = event.category === 'CONGRESSO' ? 30 : 6;
-      hours = baseHours + categoryBonus;
+  saveFinancialSettings(settings: Pick<FinancialSettings, 'pixKey' | 'pixReceiverName'>, actor: User): FinancialSettings {
+    if (actor.role !== 'COORDENADOR' && actor.role !== 'ROOT') {
+      throw new Error('Apenas coordenador ou root podem alterar configurações financeiras.');
     }
 
-    const randHash = Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('').toUpperCase();
-
-    const newCert: Certificate = {
-      id: `cert_${Date.now()}`,
-      userId: user.id,
-      userName: user.name,
-      userRa: user.ra,
-      eventId,
-      eventName: event.name,
-      hours,
-      hash: `CRE-${randHash}`,
-      issuedAt: new Date().toISOString(),
-      coordinationSignature: 'Prof. Roberto de Almeida — Coordenador Geral',
-      workshopsDetails
+    const next: FinancialSettings = {
+      pixKey: settings.pixKey.trim(),
+      pixReceiverName: settings.pixReceiverName?.trim() || 'Campo Real Eventos',
+      updatedAt: new Date().toISOString()
     };
 
-    certs.push(newCert);
-    write(KEYS.CERTIFICATES, certs);
+    write(KEYS.FINANCIAL_SETTINGS, next);
 
     this.addLog(
-      'CERTIFICATE_ISSUED',
-      user.email,
-      user.role,
-      `Certificado de participação emitido automaticamente para ${user.name} em "${event.name}"`
+      'UPDATE_FINANCIAL_SETTINGS',
+      actor.email,
+      actor.role,
+      `Atualizou chave PIX da plataforma para ${next.pixReceiverName}`
     );
 
-    apiPost('/api/db/write-certificate-save', newCert);
+    apiPost('/api/db/write-financial-settings', next);
 
-    return newCert;
+    return next;
   },
 
   getBanners(): HomeBanner[] {

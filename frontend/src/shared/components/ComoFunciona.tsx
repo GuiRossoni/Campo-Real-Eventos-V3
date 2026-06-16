@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, BookOpen, Compass, CreditCard, Award, BadgeCheck } from 'lucide-react';
+import { ArrowLeft, BookOpen, Compass, CreditCard, ClipboardCheck, BadgeCheck } from 'lucide-react';
 import { THEME, COMPONENT } from '../styles/designSystem';
 
 interface ComoFuncionaProps {
@@ -18,7 +18,7 @@ export default function ComoFunciona({ onBackToHome }: ComoFuncionaProps) {
       index: '02',
       title: 'Selecione e Inscreva-se',
       icon: <CreditCard className="w-5 h-5 text-blue-600" />,
-      description: 'Registre-se nos workshops e palestras escolhendo suas opções preferidas. O processo suporta pagamentos simulados por cartões, Pix ou workshops inteiramente gratuitos mantidos pela universidade.'
+      description: 'Registre-se nos workshops e palestras escolhendo suas opções preferidas. Para eventos pagos, o sistema aceita somente PIX com validação manual pela coordenação.'
     },
     {
       index: '03',
@@ -28,9 +28,9 @@ export default function ComoFunciona({ onBackToHome }: ComoFuncionaProps) {
     },
     {
       index: '04',
-      title: 'Emita seus Certificados',
-      icon: <Award className="w-5 h-5 text-blue-600" />,
-      description: 'Após a chancela da coordenação, as horas complementares são validadas imediatamente. Visualize ou faça o download de seus certificados com design oficial diretamente na sua área do aluno.'
+      title: 'Acompanhe sua Frequência',
+      icon: <ClipboardCheck className="w-5 h-5 text-blue-600" />,
+      description: 'Após a confirmação de presença, suas horas e frequência ficam registradas no sistema para acompanhamento acadêmico junto ao orientador e coordenação.'
     }
   ];
 
@@ -87,7 +87,7 @@ export default function ComoFunciona({ onBackToHome }: ComoFuncionaProps) {
           <div>
             <h4 className="text-sm font-black uppercase tracking-wider text-white">Chancela e Validade das Horas</h4>
             <p className="text-xs text-gray-300 mt-1.5 leading-relaxed font-semibold">
-              Todos os certificados gerados pela plataforma digital estão formalmente vinculados ao registro de eventos cadastrado na secretaria de extensão acadêmica da Campo Real. As horas são computadas e validadas eletronicamente, de acordo com as diretrizes do Colegiado de cada curso.
+              O registro digital de presença é vinculado ao evento cadastrado na secretaria de extensão acadêmica da Campo Real. As horas são computadas e validadas eletronicamente de acordo com as diretrizes do Colegiado de cada curso.
             </p>
           </div>
         </div>

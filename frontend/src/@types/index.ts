@@ -48,6 +48,7 @@ export interface Workshop {
 }
 
 export type PaymentStatus = 'PENDENTE' | 'APROVADO' | 'CANCELADO';
+export type PaymentOption = 'PIX' | 'GRATUITO';
 
 export interface Enrollment {
   id: string;
@@ -59,6 +60,7 @@ export interface Enrollment {
   eventName: string;
   selectedWorkshops: string[];
   totalValue: number;
+  paymentOption?: PaymentOption;
   status: PaymentStatus;
   createdAt: string;
 }
@@ -119,4 +121,10 @@ export interface FinancialExpense {
   type: 'DESPESA' | 'ENTRADA';
   date: string;
   createdAt: string;
+}
+
+export interface FinancialSettings {
+  pixKey: string;
+  pixReceiverName?: string;
+  updatedAt: string;
 }

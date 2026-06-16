@@ -12,7 +12,12 @@ export let fallbackDb = {
     attendance: [...SEEDED_ATTENDANCE],
     certificates: [],
     banners: [...SEEDED_BANNERS],
-    logs: [...SEEDED_LOGS]
+    logs: [...SEEDED_LOGS],
+    financialSettings: {
+        pixKey: '',
+        pixReceiverName: 'Campo Real Eventos',
+        updatedAt: new Date(0).toISOString()
+    }
 };
 export function setMySQLState(active) {
     isUsingMySQL = active;
@@ -22,6 +27,13 @@ export function loadFallbackDb() {
         if (fs.existsSync(ENV.FALLBACK_DB_PATH)) {
             const data = fs.readFileSync(ENV.FALLBACK_DB_PATH, 'utf-8');
             fallbackDb = JSON.parse(data);
+            if (!fallbackDb.financialSettings) {
+                fallbackDb.financialSettings = {
+                    pixKey: '',
+                    pixReceiverName: 'Campo Real Eventos',
+                    updatedAt: new Date(0).toISOString()
+                };
+            }
             console.log('📌 [Config Database] Banco de dados local fallback carregado com sucesso!');
         }
         else {
@@ -198,6 +210,15 @@ async function createMySQLTablesAndSeeds() {
         isActive BOOLEAN NOT NULL DEFAULT 1
       );
     `);
+                // 9. Configurações financeiras
+                await connection.query(`
+            CREATE TABLE IF NOT EXISTS financial_settings (
+                id INT PRIMARY KEY,
+                pixKey VARCHAR(255) NOT NULL,
+                pixReceiverName VARCHAR(255) NULL,
+                updatedAt VARCHAR(50) NOT NULL
+            );
+        `);
         const [userRows] = await connection.query('SELECT COUNT(*) as count FROM users');
         if (userRows[0].count === 0) {
             console.log('🌱 Alimentando usuários iniciais no MySQL...');
@@ -247,6 +268,10 @@ async function createMySQLTablesAndSeeds() {
                 await connection.query('INSERT INTO system_logs (id, action, userEmail, userRole, details, timestamp) VALUES (?, ?, ?, ?, ?, ?)', [l.id, l.action, l.userEmail, l.userRole, l.details, l.timestamp]);
             }
         }
+        const [financialRows] = await connection.query('SELECT COUNT(*) as count FROM financial_settings');
+        if (financialRows[0].count === 0) {
+            await connection.query('INSERT INTO financial_settings (id, pixKey, pixReceiverName, updatedAt) VALUES (1, ?, ?, ?)', ['', 'Campo Real Eventos', new Date(0).toISOString()]);
+        }
         console.log('🎉 [Config Database] Tabelas criadas e dados semeados com sucesso!');
     }
     finally {
@@ -267,6 +292,8 @@ export async function getFullState() {
         const [certificates] = await connection.query('SELECT * FROM certificates');
         const [banners] = await connection.query('SELECT * FROM home_banners');
         const [logs] = await connection.query('SELECT * FROM system_logs ORDER BY timestamp DESC');
+        const [financialSettingsRows] = await connection.query('SELECT * FROM financial_settings WHERE id = 1 LIMIT 1');
+        const financialSettings = financialSettingsRows[0] || { pixKey: '', pixReceiverName: 'Campo Real Eventos', updatedAt: new Date(0).toISOString() };
         return {
             users: users.map((u) => ({ ...u, ra: u.ra || undefined, course: u.course || undefined, period: u.period || undefined, institution: u.institution || undefined })),
             events: events.map((e) => ({ ...e, isFeatured: !!e.isFeatured, price: Number(e.price) })),
@@ -280,7 +307,12 @@ export async function getFullState() {
             attendance: attendance.map((a) => ({ ...a, userRa: a.userRa || undefined, workshopId: a.workshopId || undefined })),
             certificates: certificates.map((c) => ({ ...c, userRa: c.userRa || undefined, hours: Number(c.hours) })),
             banners: banners.map((b) => ({ ...b, isActive: !!b.isActive, linkToEventId: b.linkToEventId || undefined })),
-            logs: logs.map((l) => ({ ...l }))
+            logs: logs.map((l) => ({ ...l })),
+            financialSettings: {
+                pixKey: financialSettings.pixKey || '',
+                pixReceiverName: financialSettings.pixReceiverName || 'Campo Real Eventos',
+                updatedAt: financialSettings.updatedAt || new Date(0).toISOString()
+            }
         };
     }
     catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Event, Workshop, Enrollment, SystemLog, HomeBanner, UserRole, FinancialExpense, ExpenseCategory } from '../../types';
+import { User, Event, Workshop, Enrollment, SystemLog, HomeBanner, UserRole, FinancialExpense, ExpenseCategory, FinancialSettings } from '../../types';
 import { ShieldCheck, BarChart4, ClipboardList, CheckCircle2, XCircle, Sliders, Settings, Users, LogIn, ChevronRight, Play, ToggleLeft, ToggleRight, Sparkles, Activity, FileSpreadsheet, TrendingUp, TrendingDown, DollarSign, FileText, Download, Trash2, Plus, Calculator, AlertCircle, RefreshCw, Edit2, Calendar, MapPin, BookOpen } from 'lucide-react';
 import { DB } from '../utils/db';
 import { THEME } from '../styles/designSystem';
@@ -12,6 +12,7 @@ interface DashboardCoordenadorProps {
   logs: SystemLog[];
   banners: HomeBanner[];
   systemUsers: User[];
+  financialSettings: FinancialSettings;
   onDataChanged: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function DashboardCoordenador({
   logs,
   banners,
   systemUsers,
+  financialSettings,
   onDataChanged
 }: DashboardCoordenadorProps) {
   const [activeSubTab, setActiveSubTab] = useState<'METRICS' | 'APPROVALS' | 'BANNERS' | 'AUDIT_LOGS' | 'USERS' | 'FINANCEIRO' | 'INSCRITOS' | 'EVENTOS'>('METRICS');
@@ -95,6 +97,13 @@ export default function DashboardCoordenador({
   
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportEventId, setReportEventId] = useState<string>('ALL');
+  const [pixKeyInput, setPixKeyInput] = useState(financialSettings.pixKey || '');
+  const [pixReceiverInput, setPixReceiverInput] = useState(financialSettings.pixReceiverName || 'Campo Real Eventos');
+
+  React.useEffect(() => {
+    setPixKeyInput(financialSettings.pixKey || '');
+    setPixReceiverInput(financialSettings.pixReceiverName || 'Campo Real Eventos');
+  }, [financialSettings]);
 
   const pendingEvents = events.filter(e => e.status === 'ANALISE');
 
@@ -330,6 +339,20 @@ export default function DashboardCoordenador({
       case 'PATROCINIO': return 'bg-amber-50 text-amber-700 border-amber-250';
       case 'APORTE': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const handleSavePixSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      DB.saveFinancialSettings({
+        pixKey: pixKeyInput,
+        pixReceiverName: pixReceiverInput
+      }, currentUser);
+      alert('Configuração PIX salva com sucesso!');
+      onDataChanged();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar configuração PIX.');
     }
   };
 
@@ -1863,6 +1886,42 @@ export default function DashboardCoordenador({
               </button>
             </div>
           </div>
+
+          <form onSubmit={handleSavePixSettings} className="bg-white border border-gray-200 rounded-xl p-4 shadow-3xs grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+            <div className="md:col-span-2">
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold mb-1">Chave PIX da Plataforma</label>
+              <input
+                type="text"
+                value={pixKeyInput}
+                onChange={(e) => setPixKeyInput(e.target.value)}
+                placeholder="Ex: email@instituicao.br ou +55..."
+                className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-xs text-gray-850 placeholder-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none font-semibold"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold mb-1">Favorecido</label>
+              <input
+                type="text"
+                value={pixReceiverInput}
+                onChange={(e) => setPixReceiverInput(e.target.value)}
+                placeholder="Campo Real Eventos"
+                className="w-full bg-white border border-gray-200 rounded-lg p-2.5 text-xs text-gray-850 placeholder-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none font-semibold"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[10px] tracking-wider py-2.5 px-3 rounded-lg transition-colors cursor-pointer"
+            >
+              Salvar PIX
+            </button>
+
+            <p className="md:col-span-4 text-[11px] text-gray-500">
+              Pagamentos no checkout são aceitos somente via PIX e ficam pendentes para homologação manual em "Inscritos & Pagamentos".
+            </p>
+          </form>
 
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
